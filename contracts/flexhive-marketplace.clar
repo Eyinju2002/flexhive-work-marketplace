@@ -264,7 +264,7 @@
   )
     ;; Validate job exists and is open
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-OPEN) ERR-JOB-CLOSED)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-OPEN) ERR-JOB-CLOSED)
     (asserts! (<= proposed-amount (get total-amount (unwrap-panic job))) ERR-INVALID-STATUS)
     (asserts! (> proposed-deadline block-height) ERR-DEADLINE-PASSED)
     
@@ -298,10 +298,10 @@
   )
     ;; Validate job exists and is open
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-OPEN) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-OPEN) ERR-INVALID-STATUS)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Validate proposal exists
     (asserts! (is-some proposal) ERR-PROPOSAL-NOT-FOUND)
@@ -327,14 +327,14 @@
   (let (
     (client tx-sender)
     (job (map-get? jobs { job-id: job-id }))
-    (milestone-id (default-to u0 (get milestone-id (map-get? milestones { job-id: job-id, milestone-id: u0 }))))
+    (milestone-id u0) ;; NOTE: This makes next-milestone-id always u1. The milestone ID generation logic likely needs further review.
     (next-milestone-id (+ milestone-id u1))
   )
     ;; Validate job exists
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Validate amount is available in remaining funds
     (asserts! (<= amount (get remaining-amount (unwrap-panic job))) ERR-INSUFFICIENT-FUNDS)
@@ -363,10 +363,10 @@
   )
     ;; Validate job exists and is assigned
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-ASSIGNED) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-ASSIGNED) ERR-INVALID-STATUS)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Validate milestone exists and is not paid
     (asserts! (is-some milestone) ERR-MILESTONE-NOT-FOUND)
@@ -418,7 +418,7 @@
   )
     ;; Validate job exists and is assigned
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-ASSIGNED) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-ASSIGNED) ERR-INVALID-STATUS)
     
     ;; Validate freelancer is the assignee
     (asserts! (is-eq (some freelancer) (get assignee (unwrap-panic job))) ERR-NOT-ASSIGNEE)
@@ -443,10 +443,10 @@
   )
     ;; Validate job exists and is marked as completed
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-COMPLETED) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-COMPLETED) ERR-INVALID-STATUS)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Process final payment if any remaining amount
     (let (
@@ -497,13 +497,13 @@
     ;; Validate job exists and is assigned or completed
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
     (asserts! (or 
-      (= (get status (unwrap-panic job)) STATUS-ASSIGNED)
-      (= (get status (unwrap-panic job)) STATUS-COMPLETED)
+      (is-eq (get status (unwrap-panic job)) STATUS-ASSIGNED)
+      (is-eq (get status (unwrap-panic job)) STATUS-COMPLETED)
     ) ERR-INVALID-STATUS)
     
     ;; Validate initiator is either client or assignee
     (asserts! (or
-      (= initiator (get client (unwrap-panic job)))
+      (is-eq initiator (get client (unwrap-panic job)))
       (is-eq (some initiator) (get assignee (unwrap-panic job)))
     ) ERR-NOT-AUTHORIZED)
     
@@ -543,13 +543,13 @@
   )
     ;; Validate job exists and is disputed
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-DISPUTED) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-DISPUTED) ERR-INVALID-STATUS)
     
     ;; Validate dispute exists
     (asserts! (is-some dispute) ERR-NO-ACTIVE-DISPUTE)
     
     ;; Check if user is client or freelancer and update appropriate evidence
-    (if (= user (get client (unwrap-panic job)))
+    (if (is-eq user (get client (unwrap-panic job)))
       (map-set disputes
         { job-id: job-id }
         (merge (unwrap-panic dispute)
@@ -613,10 +613,10 @@
     
     ;; Validate job exists and is disputed
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-DISPUTED) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-DISPUTED) ERR-INVALID-STATUS)
     
     ;; Validate percentages add up to 100
-    (asserts! (= (+ client-percentage freelancer-percentage) u100) ERR-INVALID-STATUS)
+    (asserts! (is-eq (+ client-percentage freelancer-percentage) u100) ERR-INVALID-STATUS)
     
     ;; Calculate payments
     (let (
@@ -778,10 +778,10 @@
   )
     ;; Validate job exists and is open
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
-    (asserts! (= (get status (unwrap-panic job)) STATUS-OPEN) ERR-INVALID-STATUS)
+    (asserts! (is-eq (get status (unwrap-panic job)) STATUS-OPEN) ERR-INVALID-STATUS)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Return funds to client
     (try! (as-contract (stx-transfer? (get total-amount (unwrap-panic job)) tx-sender client)))
@@ -810,12 +810,12 @@
     ;; Validate job exists and is assigned or completed
     (asserts! (is-some job) ERR-JOB-NOT-FOUND)
     (asserts! (or 
-      (= (get status (unwrap-panic job)) STATUS-ASSIGNED)
-      (= (get status (unwrap-panic job)) STATUS-COMPLETED)
+      (is-eq (get status (unwrap-panic job)) STATUS-ASSIGNED)
+      (is-eq (get status (unwrap-panic job)) STATUS-COMPLETED)
     ) ERR-INVALID-STATUS)
     
     ;; Validate client is the job owner
-    (asserts! (= client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
+    (asserts! (is-eq client (get client (unwrap-panic job))) ERR-NOT-CLIENT)
     
     ;; Transfer bonus funds to contract
     (try! (stx-transfer? bonus-amount client (as-contract tx-sender)))
@@ -834,8 +834,3 @@
     (ok true)
   )
 )
-
-;; Admin Functions
-
-;; Set contract owner
-(define-public (set
